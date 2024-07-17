@@ -39,7 +39,7 @@ const convertedValue = computed(() => {
     style: 'currency',
     currency: 'SEK',
     maximumFractionDigits: 0,
-  }).format(fullVal * parseFloat(data.value));
+  }).format(fullVal * parseFloat(data.value ?? 0));
 
   return converted;
 });
