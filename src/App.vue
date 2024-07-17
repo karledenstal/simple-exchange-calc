@@ -12,9 +12,8 @@ import Input from '@/components/ui/input/Input.vue';
 import { computed, ref } from 'vue';
 
 const summa = ref(0);
-const currency = ref('EUR');
 const modifier = ref('000000');
-const exchangeRate = ref(0);
+const exchangeRate = ref('0');
 
 const convertedValue = computed(() => {
   const fullVal = Number(`${summa.value}${modifier.value}`);
@@ -22,23 +21,10 @@ const convertedValue = computed(() => {
     style: 'currency',
     currency: 'SEK',
     maximumFractionDigits: 0,
-  }).format(fullVal * exchangeRate.value);
-
-  console.log('fullVal', fullVal);
+  }).format(fullVal * parseFloat(exchangeRate.value));
 
   return converted;
 });
-
-const options = [
-  {
-    value: 'EUR',
-    label: 'Euro',
-  },
-  {
-    value: 'USD',
-    label: 'US Dollar',
-  },
-];
 
 const modifiers = [
   {
@@ -70,22 +56,6 @@ const modifiers = [
               <SelectGroup>
                 <SelectItem
                   v-for="({ value, label }, index) in modifiers"
-                  :key="index"
-                  :value="value"
-                >
-                  {{ label }}
-                </SelectItem>
-              </SelectGroup>
-            </SelectContent>
-          </Select>
-          <Select v-model="currency">
-            <SelectTrigger>
-              <SelectValue placeholder="Välj valuta" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                <SelectItem
-                  v-for="({ value, label }, index) in options"
                   :key="index"
                   :value="value"
                 >
