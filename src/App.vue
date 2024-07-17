@@ -9,11 +9,29 @@ import {
 } from '@/components/ui/select';
 import Label from '@/components/ui/label/Label.vue';
 import Input from '@/components/ui/input/Input.vue';
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
+import { useQuery, useQueryClient } from '@tanstack/vue-query';
 
 const summa = ref(0);
+const currency = ref('EUR');
 const modifier = ref('000000');
-const exchangeRate = ref('0');
+
+const queryClient = useQueryClient();
+
+const { data } = useQuery({
+  queryKey: ['exchange'],
+  queryFn: async () => {
+    const res = await fetch(
+      `https://v6.exchangerate-api.com/v6/${
+        import.meta.env.VITE_EXCHANGE_API_KEY
+      }/latest/${currency.value}`
+    );
+    const json = await res.json();
+
+    const rates = json?.conversion_rates ?? { SEK: '' };
+    return rates.SEK;
+  },
+});
 
 const convertedValue = computed(() => {
   const fullVal = Number(`${summa.value}${modifier.value}`);
@@ -21,10 +39,25 @@ const convertedValue = computed(() => {
     style: 'currency',
     currency: 'SEK',
     maximumFractionDigits: 0,
-  }).format(fullVal * parseFloat(exchangeRate.value));
+  }).format(fullVal * parseFloat(data.value));
 
   return converted;
 });
+
+watch(currency, () => {
+  queryClient.invalidateQueries({ queryKey: ['exchange'] });
+});
+
+const options = [
+  {
+    value: 'EUR',
+    label: 'Euro',
+  },
+  {
+    value: 'USD',
+    label: 'US Dollar',
+  },
+];
 
 const modifiers = [
   {
@@ -64,10 +97,31 @@ const modifiers = [
               </SelectGroup>
             </SelectContent>
           </Select>
+          <Select v-model="currency">
+            <SelectTrigger>
+              <SelectValue placeholder="Välj valuta" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectGroup>
+                <SelectItem
+                  v-for="({ value, label }, index) in options"
+                  :key="index"
+                  :value="value"
+                >
+                  {{ label }}
+                </SelectItem>
+              </SelectGroup>
+            </SelectContent>
+          </Select>
         </div>
         <div class="flex items-center gap-2">
           <Label for="exchange">Växlingskurs</Label>
-          <Input v-model="exchangeRate" id="exchange" class="text-center" />
+          <Input
+            :disabled="true"
+            v-model="data"
+            id="exchange"
+            class="text-center"
+          />
           <Label for="exchange">SEK</Label>
         </div>
         <h2 class="text-5xl">{{ convertedValue }}</h2>
