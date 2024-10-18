@@ -12,10 +12,8 @@ import Input from '@/components/ui/input/Input.vue';
 import { computed, ref, watch } from 'vue';
 import { useQuery, useQueryClient } from '@tanstack/vue-query';
 
-const summa = ref(0);
+const summa = ref('0');
 const currency = ref('EUR');
-const modifier = ref('000000');
-
 const queryClient = useQueryClient();
 
 const { data } = useQuery({
@@ -34,14 +32,17 @@ const { data } = useQuery({
 });
 
 const convertedValue = computed(() => {
-  const fullVal = Number(`${summa.value}${modifier.value}`);
+	const num = parseFloat(summa.value.replace(/ /g, ''))
+
   const converted = new Intl.NumberFormat('sv-SE', {
     style: 'currency',
     currency: 'SEK',
     maximumFractionDigits: 0,
-  }).format(fullVal * parseFloat(data.value ?? 0));
+  }).format(num * parseFloat(data.value ?? 0));
 
-  return converted;
+	const textVersion = textCurrency(converted);
+
+  return { converted, textVersion };
 });
 
 watch(currency, () => {
@@ -59,16 +60,34 @@ const options = [
   },
 ];
 
-const modifiers = [
-  {
-    value: '000000',
-    label: 'Million',
-  },
-  {
-    value: '000000000',
-    label: 'Billion',
-  },
-];
+const textCurrency = (convertedValue: string) => {
+	const num = convertedValue.replace(/[\s\u00A0]/g, '').replace('kr', '')
+	console.log('num', num)
+	const isMillion = num.length > 6 && num.length < 10;
+	const isBillion = num.length > 9 && num.length < 13;
+
+	if (isMillion) {
+		const mills = parseFloat(num) / 1000000;
+
+		if (mills % 1 === 0) {
+			return `${mills} miljoner`;
+		}
+
+		const formatted = mills.toFixed(1).replace('.', ',');
+		return `${formatted} miljoner`;
+	}
+
+	if (isBillion) {
+		const bills = parseFloat(num) / 1000000000;
+
+		if (bills % 1 === 0) {
+			return `${bills} miljarder`;
+		}
+
+		const formatted = bills.toFixed(1).replace('.', ',');
+		return `${formatted} miljarder`;
+	}
+}
 </script>
 
 <template>
@@ -81,22 +100,7 @@ const modifiers = [
       <div class="flex flex-col gap-4">
         <div class="flex items-center">
           <Input id="summa" placeholder="Summa" v-model="summa" />
-          <Select v-model="modifier">
-            <SelectTrigger>
-              <SelectValue placeholder="Välj modifier" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectGroup>
-                <SelectItem
-                  v-for="({ value, label }, index) in modifiers"
-                  :key="index"
-                  :value="value"
-                >
-                  {{ label }}
-                </SelectItem>
-              </SelectGroup>
-            </SelectContent>
-          </Select>
+
           <Select v-model="currency">
             <SelectTrigger>
               <SelectValue placeholder="Välj valuta" />
@@ -124,7 +128,8 @@ const modifiers = [
           />
           <Label for="exchange">SEK</Label>
         </div>
-        <h2 class="text-5xl">{{ convertedValue }}</h2>
+				<h3 class="text-4xl">{{ convertedValue.textVersion }}</h3>
+        <h2 class="text-2xl">{{ convertedValue.converted }}</h2>
         <div class="flex flex-col text-xs">
           <span>Miljon: följs av 6 siffror</span>
           <span>Miljard: följs av 9 siffror</span>
