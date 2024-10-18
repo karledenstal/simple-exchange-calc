@@ -32,7 +32,7 @@ const { data } = useQuery({
 });
 
 const convertedValue = computed(() => {
-	const num = parseFloat(summa.value.replace(/ /g, ''))
+	const num = parseFloat(summa.value.replace(/ /g, '')) ?? 0
 
   const converted = new Intl.NumberFormat('sv-SE', {
     style: 'currency',
@@ -62,7 +62,6 @@ const options = [
 
 const textCurrency = (convertedValue: string) => {
 	const num = convertedValue.replace(/[\s\u00A0]/g, '').replace('kr', '')
-	console.log('num', num)
 	const isMillion = num.length > 6 && num.length < 10;
 	const isBillion = num.length > 9 && num.length < 13;
 
@@ -128,8 +127,8 @@ const textCurrency = (convertedValue: string) => {
           />
           <Label for="exchange">SEK</Label>
         </div>
-				<h3 class="text-4xl">{{ convertedValue.textVersion }}</h3>
-        <h2 class="text-2xl">{{ convertedValue.converted }}</h2>
+				<h3 class="text-4xl">{{ convertedValue.textVersion || '0' }}</h3>
+        <h2 class="text-2xl">{{ convertedValue.converted || '0' }}</h2>
         <div class="flex flex-col text-xs">
           <span>Miljon: följs av 6 siffror</span>
           <span>Miljard: följs av 9 siffror</span>
